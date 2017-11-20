@@ -1,0 +1,128 @@
+AC_INIT(egads.h.in)
+
+EGADS_VERSION_MAJOR=0
+EGADS_VERSION_MINOR=7
+EGADS_VERSION_RELEASE=0
+
+AC_SUBST(EGADS_VERSION_MAJOR)
+AC_SUBST(EGADS_VERSION_MINOR)
+AC_SUBST(EGADS_VERSION_RELEASE)
+
+
+dnl Command line stuff
+egads_data_dir="/usr/local/etc"
+AC_ARG_WITH(egads-datadir,
+    [  --with-egads-datadir[=path] ],
+    [egads_data_dir="$withval"],
+    )
+
+AC_DEFINE_UNQUOTED(EGADSDATA, "$egads_data_dir")
+AC_SUBST(egads_data_dir)
+dnl Checks for programs
+AC_PROG_CC
+AC_PROG_INSTALL
+
+
+dnl Libtool
+AC_CONFIG_AUX_DIR(.)
+AC_LIBTOOL_DLOPEN
+AM_PROG_LIBTOOL
+AC_SUBST(LIBTOOL_DEPS)
+
+
+dnl Checks for libraries
+AC_CHECK_LIB(socket, socket)
+ACX_PTHREAD([], AC_MSG_ERROR("Unable to find required PThreads support."))
+AC_SEARCH_LIBS(sched_yield, rt c_r, [], AC_MSG_ERROR("Unable to located sched_yield\(\). Tried \-lrt and -lc_r."))
+
+
+
+
+dnl Host specific stuff
+AC_CANONICAL_HOST
+AC_C_BIGENDIAN
+
+
+case "$host_os" in
+*solaris*) host_os=solaris host_type=sysv ;;
+*linux*) host_os=linux host_type=linux ;;
+*openbsd*) host_os=openbsd host_type=bsd ;;
+*darwin*) host_os=darwin host_type=bsd ;;
+*freebsd*) host_os=freebsd host_type=bsd ;;
+*) host_os=notfound ;;
+esac
+
+case "$host_os" in
+*freebsd*) AC_DEFINE(FBSD_THREADS) ;;
+*openbsd*) AC_DEFINE(FBSD_THREADS) ;;
+esac
+
+
+
+dnl Checks for types
+AC_TYPE_SIZE_T
+TYPE_SOCKLEN_T
+
+dnl Checks for compiler characteristics
+AC_C_CONST
+AC_C_INLINE
+
+
+dnl Checks for system services
+oldlibs="$LIBS"
+LIBS="$LIBS $PTHREAD_LIBS"
+oldflags="$CFLAGS"
+CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+oldcc="$CC"
+CC="$PTHREAD_CC"
+AC_MSG_CHECKING(Threads use seperate pid)
+AC_TRY_RUN([#include <sys/types.h>
+#include <unistd.h>
+#include <pthread.h>
+void *
+start1(void *foo)
+{
+    pid_t mypid;
+    mypid = getpid();
+    return (void *)mypid;
+}
+void *
+start2(void *foo)
+{
+    pid_t mypid;
+    mypid = getpid();
+    return (void *)mypid;
+}
+int main()
+{
+    void *myarg1, *myarg2;
+    pid_t mypid1;
+    pthread_t t1, t2;
+    mypid1 = getpid();
+    pthread_create(&t1, NULL, start1, NULL);
+    pthread_create(&t2, NULL, start2, NULL);
+    pthread_join(t1, &myarg1);
+    pthread_join(t2, &myarg2);
+    if((mypid1 == (int)myarg1) &&(mypid1  == (int)myarg2) && ((int)myarg2 == (int)myarg1))
+      return 1;
+    else
+      return 0;
+}], threadpid=1,threadpid=0,threadpid=0)
+
+if test "$threadpid" = 1; then
+    AC_MSG_RESULT(yes)
+    AC_DEFINE(THREAD_USES_NEWPID)
+else
+    AC_MSG_RESULT(no)
+fi
+
+LIBS="$oldlibs"
+CFLAGS="$oldflags"
+CC="$oldcc"
+
+dnl Output headers and Makefile
+top_builddir="$PWD"
+srcdir="$PWD"
+AC_SUBST(top_builddir)
+AC_CONFIG_HEADER(egads.h)
+AC_OUTPUT(Makefile)

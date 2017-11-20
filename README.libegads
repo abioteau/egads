@@ -1,0 +1,125 @@
+
+Egads provides an easy to use interface to a cryptographically strong PRNG.
+This PRNG uses the egads entropy daemon to seed itself initially, or if that
+is not available, a file that can be read to obtain useable entropy data.
+
+Using the egads PRNG library is simple, and consists of the following API 
+calls.
+
+void
+egads_init(prngctx_t * ctx, char *sockname, char *rfile, int *err)
+
+Initialize the PRNG context ctx, so that it is ready to begin outputting
+random bytes. The argument 'sockname' should reference the Unix Domain
+socket created by the running egads daemon. If this is set to NULL, the
+default (/usr/local/etc/egads.socket) will be used.
+
+The argument 'rfile' refers to a file that can be opened and data read
+from. It will be used as a fallback in case the egads socket file does
+not exist. If this is set to NULL, the file /dev/random will be used.
+
+Any errors that occur in this process will cause an error code to be
+placed in 'err'. Note that this function does NOT return failure or 
+success status, it will be placed in 'err'.
+
+
+
+void
+egads_destroy(prngctx_t * ctx)
+
+Reset the PRNG context 'ctx' to the default state. A destroyed context cannot
+produce meaningful random data anymore.
+
+
+
+**Egads random number generation functions:
+
+All functions will take a final argument that will contain the success or
+failure status of the call upon completion. 
+
+void 
+egads_randlong(prngctx_t *ctx, long *out, int *error)
+
+Places a random long into 'out'.
+
+void
+egads_randint(prngctx_t * ctx, unsigned int *out, int *error)
+
+Places a random integer between 0 and UINT_MAX into 'out'
+
+void
+egads_randreal(prngctx_t * ctx, double *out, int *error)
+
+Places a random double between 0 and 1 (inclusive) into 'out'.
+
+void
+egads_randuniform(prngctx_t *ctx, double *out, double min, double max, int *error)
+
+ Places a random double into 'out' with the condition min <= out < max
+
+void 
+egads_randrange(prngctx_t * ctx, int *out, int min, int max, int *error)
+
+ Places a rnadom integer in the range [min,max] into 'out'. 'min' is allowed
+ to be negative.
+
+void
+egads_gauss(prngctx_t *ctx, double *out, double mu, double sigma, int *error)
+
+void 
+egads_normalvariate(prngctx_t *ctx, double *out, double mu, double sigma, int *error)
+
+void 
+egads_lognormalvariate(prngctx_t *ctx, double *out, double mu, double sigma, int *error)
+
+void 
+egads_paretovariate(prngctx_t *ctx, double *out, double alpha, int *error)
+
+void 
+egads_weibullvariate(prngctx_t *ctx, double *out, double alpha, double beta, int *error)
+
+void
+egads_expovariate(prngctx_t *ctx, double *out, double lambda, int *error)
+
+void
+egads_betavariate(prngctx_t *ctx, double *out, double alpha, double beta, int *error)
+
+void 
+egads_cunifvariate(prngctx_t *ctx, double *out, double mean, double arc, int *error)
+
+
+
+**Egads random string generation functions:
+
+void
+egads_randstring(prngctx_t * ctx, char *out, int len, int *error)
+
+ Generate a random string that can contain any printable character.
+ (ASCII 33 through 126) out must be len+1 bytes long, in order to accomodate
+ the terminating zero. Caller is responsible for allocating the buffer.
+
+void
+egads_randfname(prngctx_t * ctx, char *out, int len, int *error)
+
+ Generate a random string in the range [a-zA-Z0-9] (safe bet for valid
+ filename generation). This function expects
+ the destination to already be allocated, and be allocated with enough
+ space to hold the string plus a terminating null. The function will
+ add the null. (allocate len+1 bytes to the char * you pass in) 
+
+
+
+***Talking to the entropy gateway directly.
+
+It is possible to obtain raw entropy from the entropy gateway itself.  On Unix
+systems, doing so is a simple matter, but it is far more complex on Windows.
+An API is provided that hides the required details on various platforms.
+
+void
+egads_entropy(prngctx_t * ctx, char *out, int len, int *error)
+
+ Establishes a connection to the entropy gateway and obtains len bytes of raw
+ entropy. If not enough entropy is currently available to satisfy the request,
+ this function will block until there is.  The entropy will be written to the
+ specified buffer.  If an error occurs, error will contain an error code
+ indicating the cause of the error; otherwise it will be 0.

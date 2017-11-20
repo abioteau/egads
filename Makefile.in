@@ -1,0 +1,132 @@
+VERSION_MAJOR	= @EGADS_VERSION_MAJOR@
+VERSION_MINOR	= @EGADS_VERSION_MINOR@
+VERSION_RELEASE	= @EGADS_VERSION_RELEASE@
+VERSION		= -version-info $(VERSION_MAJOR):$(VERSION_MINOR):$(VERSION_RELEASE)
+
+
+EGADSDATA	= @egads_data_dir@
+prefix          = @prefix@
+exec_prefix     = @exec_prefix@
+BINDIR		= @bindir@
+LIBDIR          = @libdir@
+INCLUDEDIR	= @includedir@
+INSTALL         = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA    = @INSTALL_DATA@
+INSTALL_SCRIPT  = @INSTALL_SCRIPT@
+
+
+DEFS		= @DEFS@ 
+
+LIBTOOL_DEPS = @LIBTOOL_DEPS@
+
+
+top_builddir	= @top_builddir@
+
+
+CC		= @PTHREAD_CC@
+CFLAGS		= -Wall -I@srcdir@  $(DEFS) @CFLAGS@ -D_POSIX_PTHREAD_SEMANTICS @PTHREAD_CFLAGS@ -g
+LDFLAGS		= -rpath $(LIBDIR) @LDFLAGS@ @PTHREAD_CFLAGS@ 
+LIBS		= @LIBS@ @PTHREAD_LIBS@  -g -lm
+
+LIBTOOL		= @LIBTOOL@
+
+
+COMPILE		= $(LIBTOOL) --mode=compile $(CC)
+LINK		= $(LIBTOOL) --mode=link $(CC) $(VERSION)
+
+ 
+
+
+OSDIR		= @host_os@
+EGADSBIN	= egads
+EGADSBINOBJS	= umac.o \
+		  eg.o \
+		  $(OSDIR)/ps.o \
+		  $(OSDIR)/df.o \
+		  unix/common.o \
+		  unix/server.o \
+		  popen.o \
+		  procout.o \
+		  sha1.o 
+
+
+EGADSLIB        = libegads.la
+EGADSLIBOBJS	= randlib.o \
+                  prng.o \
+                  umac.o \
+		  unix/common.o \
+		  unix/client.o \
+                  sha1.o
+
+
+LIBOBJS		  = $(EGADSLIBOBJS:.o=.lo)
+BINOBJS		  = $(EGADSBINOBJS:.o=.lo)
+
+INDENT_FLAGS = -bad -bap -nbc -bbb -bl -bli0 -bls -cbi2 -ce -ci2 -cli0	\
+-i2 -l78 -lc78 -lp -nbbo -ncs -nip -npcs -nprs -psl -sbi0 -bbb -di16	\
+-pi2 -nbs -ss
+
+
+all:	$(EGADSBIN) $(EGADSLIB) startup-script
+
+
+$(EGADSBIN): $(EGADSBINOBJS)
+	$(LINK) $(LDFLAGS) -o $(EGADSBIN) $(BINOBJS) $(LIBS)
+
+
+$(EGADSLIB): $(EGADSLIBOBJS)
+	$(LINK) $(LDFLAGS) -o $(EGADSLIB) $(LIBOBJS) $(LIBS)
+
+
+prng-test: prng-test.o prng.o aes.o rijndael-alg-ref.o 
+	$(LINK) $(LDFLAGS) -o prng-test prng-test.lo prng.lo aes.lo rijndael-alg-ref.lo $(LIBS)
+
+randlib-test: randlib-test.o
+	$(LINK) $(LDFLAGS) -legads -o randlib-test randlib-test.o -lm
+
+.c.o:
+	$(COMPILE) $(CFLAGS) -o $@ -c $<
+
+clean:
+	rm -rf *~ core *.o
+	rm -f $(EGADSBINOBJS)
+	rm -f $(EGADSLIBOBJS)
+	rm -f $(OSDIR)/*.o
+	rm -f $(OSDIR)/*.lo 
+	rm -f *.lo
+	rm -rf .libs
+	rm -f $(EGADSBIN) 
+	rm -f prng-test
+	rm -rf randlib-test
+	rm -f $(EGADSLIB)
+	rm -f egads.sh
+
+	
+distclean:	clean
+	rm -f config.cache config.log config.status Makefile egads.h libtool
+
+indent:
+	indent $(INDENT_FLAGS) *.c */*.c
+
+
+startup-script:
+	 sed -e "s^%%BINDIR%%^${BINDIR}^" -e "s^%%EGADSDATA%%^${EGADSDATA}^" egads.sh.in > egads.sh
+
+install:
+	./mkinstalldirs $(LIBDIR) $(BINDIR) $(INCLUDEDIR)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(EGADSLIB) $(LIBDIR)
+	$(LIBTOOL) --finish $(LIBDIR)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(EGADSBIN) $(BINDIR)
+	$(LIBTOOL) --finish $(BINDIR)
+	$(LIBTOOL) --mode=install $(INSTALL_DATA) egads.h $(INCLUDEDIR)
+	$(LIBTOOL) --mode=install $(INSTALL_DATA) umac.h $(INCLUDEDIR)
+
+config:
+	./config.status
+
+
+libtool:	$(LIBTOOL_DEPS)
+	$(SHELL) ./config.status --recheck
+
+# vim: noexpandtab:sts=0:ts=8:sw=8

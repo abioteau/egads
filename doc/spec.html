@@ -1,0 +1,266 @@
+<html>
+<head>
+<title>The "Tiny" random number infrastructure</title>
+</head>
+<body>
+<h1>The "Tiny" random number infrastructure</h1>
+<h2>Introduction</h2>
+<p>
+Tiny is divided into two parts, the Entropy Gateway (EG) and the
+Pseudo-Random Number Generator (PRNG).  The PRNG is a slight
+modification of the PRNG used in Yarrow-160 (we use a MAC instead of a
+block cipher in counter mode, and make other minor changes).  The
+entropy gateway is totally different than anything specified in the
+Yarrow paper, and is also completely different from the Yarrow-AES
+algorithm John and Pravir worked on while at Cigital (potential IP
+issues was one reason for this new algorithm; efficiency was the
+other).
+</p>
+
+<h2>The Tiny Entropy Gateway</h2>
+
+<h3>Parameters</h3>
+<ul>
+ <li>N:      maximum number of sources (1..)</li>
+ <li>POOLSZ: Size of an entropy pool in bytes (128, 256, 512, 1024, 2048)</li>
+ <li>UOL:    Output length of UMAC algorithm in bytes (1-32)</li>
+ <li>KEYSZ:  Size of UMAC Key in bytes (16 or 32)</li>
+ <li>BUFSZ:  Size of output buffer in UMAC-output blocks. (1..)</li>
+ <li>P/Q:    Fraction of outputs that get mixed in with the UMAC key. 
+	     (any)</li>
+ <li>R:      Number of sources we assume can be compromised by an attacker. 
+             (1..N-1)</li>
+ <li>S:      Paranoia constant (as a percent). (any)</li>
+</ul>
+
+<h3>Recommended values</h3>
+<ul>
+ <li>N:      10</li>
+ <li>POOLSZ: 512</li>
+ <li>UOL:    8</li>
+ <li>KEYSZ:  16</li>
+ <li>BUFSZ:  32</li>
+ <li>P:      1</li>
+ <li>Q:      10</li>
+ <li>R:      1</li>
+ <li>S:      10 </li>
+</ul>
+
+<h3>Computed values</h3>
+
+<ul>
+ <li>THRESH is computed by taking FLOOR((UOL * S)/100) + UOL</li>
+</ul>
+
+<h3>Components of the Entropy Gateway</h3>
+
+<ol>
+ <li> The "entropy pool".  The entropy pool is a collection unit for raw
+      data coming in from entropy sources.  The pool consists of a buffer
+      (the entropy buffer), a 128-bit counter, and an array of N entropy
+      estimates.  The entropy buffer is implemented as a set of parallel
+      LSFRs (linear shift feedback registers).
+ </li>
+ <li> The "slow pool".  The slow pool is a set of data structures
+      intended to provide cryptographic security as a fallback mechanism, in
+      case entropy sources are compromised.  The slow pool consists of a
+      UMAC context, and a buffer of size KEYSZ (we call this the pre-key,
+      as it will ultimately replace the internal UMAC key).
+ </li>
+ <li> An output buffer.  This is a buffer that contains "processed"
+      entropy.  External requests for entropy get serviced from this buffer. 
+ </li>
+</ol>
+
+<h3>The Entropy Pool</h3>
+<p>
+The counter and entropy estimates initialize to zeros.  The entropy
+buffer initializes to all bits set (each byte is 0xff).  When the
+entropy pool is flushed (see below), all elements of the entropy pool
+get set to the original state, except for the counter.
+</p>
+<p>
+The entropy buffer is really 8 parallel LSFRs.  Entropy sources mix
+their data into this pool.  Bytes get mixed in using a primitive
+polynomial of the appropriate size over GF(2).  We use polynomials
+taken from /dev/random, though the mixing code is different.
+</p>
+<p>
+Here are primitive polynomials taken from /dev/random.  Hopefully they
+are not too sparse:
+</p>
+
+<ul>
+ <li>2048 bytes: x^2048 + x^1638 + x^1231 + x^819 + x^411 + x + 1</li>
+ <li>1024 bytes: x^1024 + x^817 + x^615 + x^412 + x^204 + x + 1</li>
+ <li>512 bytes:  x^512 + x^411 + x^308 + x^208 + x^104 + x + 1</li>
+</ul>
+<p>
+Special note: The buffer size must be at least eight times (default is
+16) the size of the output size (UOL), to avoid entropy loss when
+sources only provide entropy in lower order bits.  (Optionally, we can
+do some sort of shifting, but it seems like more effort than it is
+worth).  This is sufficient for Tiny, because we never expect the
+entire buffer to contain more than UOL bits of entropy.
+</p>
+<p>
+The 2nd-6th terms of the polynomial are "taps", numbered 1 through 5.
+To mix in a byte of entropy, we take the byte, xor it with the 5 taps,
+then we rotate the pool left one byte, and replace the first byte of
+the pool with the result.
+</p>
+<p>
+When entropy comes in from a source, the entropy counter for that
+source is incremented by the "hint" provided by the source (note that
+there is no need to count past THRESH for any one source, and doing so
+might result in overflow errors).
+</p>
+<p>
+After entropy is added, the EG checks to see if the LSFR has enough
+entropy to output.  The output rule is as follows:
+</p>
+<p>
+Total the entropy collected from all sources, after subtracting out
+the top R contributors.  If the number of bits is > THRESH, then an
+output occurs.
+</p>
+<p>
+Outputs can go to the output buffer or to the slow pool.  The rules for
+where to output are as follows:
+</p>
+<ol>
+ <li> If the slow pool has not reseeded (ie, the internal UMAC context has
+      not been initialized), outputs go to the slow pool.
+ </li>
+ <li> If the output buffer is full, outputs go to the slow pool.
+ </li>
+ <li>The first (Q-P) out of every Q outputs go to the output buffer.
+     The remaining P go to the slow pool.  If any outputs went to the 
+     slow pool because the output buffer was filled, then any counters 
+     get reset.  That is, the next Q-P outputs should go to the output
+     buffer, if possible.
+ </li>
+</ol>
+To output to either buffer:
+<ol>
+ <li> Increment the UMAC nonce by one.  </li>
+ <li> UMAC the contents of the entropy buffer.</li>
+</ol>
+
+If outputing to the output buffer:
+<ol>
+ <li> Place the results in the output buffer.</li>
+ <li>Re-initialize the entropy buffer (to 0xff) and the entropy estimates.</li>
+</ol>
+
+To output to the slow pool:
+<ol>
+ <li>XOR the output into the first UOL bytes of the slow buffer.</li>
+ <li>Rotate the slow buffer left UOL bytes.</li>
+ <li>Re-initialize the entropy buffer (to 0xff) and the entropy estimates.</li>
+ <li>Re-seed the slow pool, if necessary.</li>
+</ol>
+
+<h3>The Slow Pool</h3>
+<p>
+At startup, the slow pool counter is set to zero.  The step is set to
+zero.  The UMAC is initialized with a key of all zeros, and a nonce of
+the current time as reported by gettimeofday(), truncating off the
+most significant bits if necessary.  The buffer is initialized to all
+zeros.
+</p>
+
+<h3>Slow Pool Reseeds</h3>
+<p>
+When the entropy pool has output to every byte of the pre-key once and
+only once, that is called a "pass" on the pre-key.
+</p>
+<p>
+If the slow pool has never reseeded before, it reseeds after a single
+pass on the pre-key.
+</p>
+<p>
+Otherwise, the slow pool takes twice as many passes on the pre-key to
+reseed as it did the last time it reseeded, with a maximum of 32.
+</p>
+<p>
+When the slow pool reseeds, output KEYLEN blocks of output as follows: 
+</p>
+<ol>
+ <li>Increment the nonce by one.</li>
+ <li>UMAC UOL bytes of the pre-key.</li>
+</ol>
+<p>
+Then, take the resulting bytes, and overwrite the UMAC key.  
+Finally, zero out the pre-key.
+</p>
+
+<h3>The Output Buffer</h3>
+<p>
+Outputs are serviced from the output buffer.  Outputs should be given in
+byte-quantities.  Pending requests that cannot be fufilled should be
+queued until output is available.  If multiple requests are pending,
+they should be served in round-robin style.
+</p>
+
+<h3>Saving and restoring state</h3>
+<p>
+The Tiny EG should be able to save and restore its state.  The UMAC
+context only should be stored.  On restore, the requirement for
+entropy pool outputs to go to the slow pool is ignored.  The slow pool
+reseeds after a single pass on the pre-key.
+</p>
+
+<h3>EG Rationalle</h3>
+<p>
+The EG tries to output pure entropy.  We try to collect at least as
+many bits of entropy as we wish to output, and usually collect more,
+because of a conservative assumption that an attacker might be able to
+compromise one or more entropy sources.  If sufficient entropy exists,
+the EG should produce "good" outputs.  We mearly compress (lossily)
+and whiten the entropy pool using UMAC.
+</p>
+<p>
+When sufficient entropy is not available due to compromise, UMAC
+provides cryptographic security as a fallback, assuming that the
+system has ever mixed sufficient entropy into the slow pool.  
+</p>
+<p>
+We clear the entropy pool every time to ensure that there are no
+correlations between successive outputs.
+</p>
+<p>
+We use UMAC because it is fast and has good provable properties.  The
+only assumption we need to make (assuming our design doesn't suck) is
+the cryptographic strength of AES.
+</p>
+
+<h2>The Tiny PRNG</h2>
+<p>
+Tiny uses the original Yarrow-160 PRNG, except that:
+</p>
+<ol>
+<li>We use UMAC instead of a block cipher. The nonce is the counter.</li>
+<li>We need data to mac... that is a 128-bit value, passed in as part of the 
+    seed.</li>
+<p>
+The generator gate frequency is a system parameter (for
+self-rekeying).  The default frequency is every 10 outputs, as in
+Yarrow-160.  The self-rekey operation is about the same as in
+Yarrow. The key is overwritten with blocks of generator output, along
+with the counter and the counter step.  The step parameter is always
+modified to be odd after a rekey.
+</p>
+<p>
+The seed should be raw entropy, and big enough to set the counter, the
+UMAC key and the step parameter.  If the step parameter is not odd, it
+is modified to be so.
+</p>
+<p>
+"Real" reseeds (ones where we add new entropy to the PRNG) can happen
+by periodic polling, or by push.  In both cases, there should be a
+parameter, minimum time between reseeds.  We recommend 60 seconds as
+the default parameter.
+</p>
+</body>
+</html>

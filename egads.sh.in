@@ -1,0 +1,41 @@
+#!/bin/sh
+
+
+
+
+
+start()  {
+
+  echo -n "Starting EGADS: "
+  %%BINDIR%%/egads
+  echo
+  
+
+}
+
+stop()  {
+  echo -n "Stopping EGADS: "
+  kill `cat %%EGADSDATA%%/egads.pid`
+  echo
+}
+
+
+
+
+
+case "$1" in
+   start)
+          start
+          ;;
+   stop)
+          stop
+          ;;
+   *)
+          start
+          ;;
+esac
+
+
+
+
+

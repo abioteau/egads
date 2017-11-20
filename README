@@ -1,0 +1,145 @@
+What is EGADS?
+  EGADS is, in simple terms, an entropy collection and distribution server.
+  The goal of EGADS is to poll various sources of entropy on the machine, and
+  securely make estimates regarding the quality of entropy. It then stores
+  this entropy for distribution to clients that require it for various
+  purposes.
+
+  The current state of EGADS should be considered alpha. While the basics
+  of entropy collection and distribution should work fine, you may occasionally
+  run into stability issues, and unexpected behavior. Please feel free to
+  contact us with any bugs or problems you have via the contact email at the
+  end of this README.
+
+
+Where does it run?
+  EGADS has been tested on Solaris (version 8), FreeBSD, OpenBSD, Linux, 
+  Darwin (MacOS X) and Windows NT4.0/2000/XP. See platform specific notes later
+  in this document.
+
+
+What does it come with?
+  The EGADS distribution contains a entropy server 'egads', and a PRNG, 
+  along with an user level library interface to the PRNG. See the file
+  'README.libegads' for documentation regarding this interface. Windows NT 4.0
+  installations also include PDH.DLL from Microsoft. See the platform notes for
+  more information.
+
+
+Installation:
+
+  Under most UNIX based OSes, the following should be sufficient to install
+  the EGADS package.
+
+  Unpack the source distribution.
+  cd egads 
+  ./configure
+  make; make install
+
+  This will install the 'egads' binary into /usr/local/bin, the PRNG interface
+  libraries libegads into /usr/local/lib, and the include files into
+  /usr/local/include. The default data directory is /usr/local/etc. Any seed
+  save files will be stored here, along with the Unix Domain socket used to
+  communicate with clients. 
+
+  ****EGADS REQUIRES THIS DIRECTORY BE SECURE IN ORDER TO RUN****
+
+  'Secure' in this context means: The directory is only writeable by the
+  directory owner. The parent directories of the data directory are only
+  writeable by their respective owners. The parent directories must be owned
+  by root or the data directory's owner. Neither the directory, nor any of its
+  parents are symlinks. The data directory must have the '+t' (sticky) bit set.
+
+
+  Running egads:
+
+  usage: egads [dhlpvCFLRSTV]
+
+  -d <seconds>  Specify the delay between collections
+  -e <filename> Specify the name of an EGD-compatible socket to service
+  -h            Display this list of options
+  -l <logfile>  Specify a log file to watch
+  -p <path>     Specify the data directory to use
+  -v            Specify verbose mode
+  -C            Do not include external commands in gathered data
+  -F            Do not fork
+  -L            Do not include log files in gathered data
+  -R            Use TrueRand
+  -S            Do not include scheduler timing in gathered data
+  -T            Do not include thread timing in gathered data
+  -V            Display version information
+
+
+  TrueRand is turned off by default. Under some testing, strange behavior was
+  observed with TrueRand turned on. Your results may vary.
+
+  If the egads daemon seems to be taking up alot of CPU, try increasing
+  the -d paramater to a larger number. The default is to NOT sleep between
+  collection runs.
+
+  EGD support is not enabled by default.  If the -e option is used, an
+  additional socket will be created and serviced that provides support for
+  requesting entropy using the EGD protocol.
+
+
+Platform specific notes:
+
+  FreeBSD:
+    During testing under FreeBSD 4.3-Release, it was noted that the code that
+    uses thread timing differences to collect entropy data was leaking memory.
+    Further isolation seemed to indicate that just the process of creating and
+    then destroying many threads in sequence caused unacceptable growth of
+    process size. As a result, this code is compiled out by default under
+    FreeBSD.
+
+  OpenBSD:
+    The same thread timing leak issue was noticed under OpenBSD 2.8. It is 
+    compiled out by default same as FreeBSD.
+
+  Windows NT4.0/2000/XP:
+    This software REQUIRES Windows NT 4.0 or better. This software will NOT run
+    on Windows 95/98/ME. As of release 0.7.1, Windows XP is also supported.
+    Release 0.7.2 adds NT 4.0 support thanks to information provided by Ernesto
+    Guisado.
+
+    Installation is quite different from Unix. A binary installation is
+    available as well as a source distribution. The binaries were built using
+    Microsoft Visual C++ 6.0. A Visual Studio project is included in the source
+    distribution. No other Windows compilers have been used or tested with.
+
+    Using the binary installation, you will be prompted for a location to
+    install EGADS. The default is x:\Program Files\EGADS, where x is the drive
+    that your Windows installation resides on. The majority of the files will
+    be copied into this directory, however EGADS also installs two other files
+    into your Windows system32 directory. They are EGADS.DLL and EGADS.EXE.
+    Uninstall should generally take care of removing them for you, provided you
+    don't have them in use if you attempt to uninstall.
+
+    EGADS.EXE is a Windows service and does not have any sort of graphical user
+    interface. Therefore there will be no icons placed on your desktop or on
+    your start menu. Included with the program is a development API that allows
+    you to use the EGADS service. This API is identical to the Unix version.
+
+    Windows NT 4.0 NOTE: If you're installing EGADS on Windows NT 4.0, PDH.DLL
+    will also be installed into your Windows system directory if it does not
+    already exist there. This DLL comes directly from Microsoft and is freely
+    redistributable. For more information regarding this DLL, see Microsoft
+    Knowledge Base article Q284996. The EGADS uninstall process will make NO
+    attempt to remove this file.
+
+
+Contact:
+
+  If you wish to contact the development team directly, please send email to:
+  egads@securesw.com
+
+
+Credits:
+
+  Egads was designed and implemented by the following people:
+
+    John Viega
+    John Kelsey
+    Zachary Girouard
+    Matt Messier
+    Pravir Chandra

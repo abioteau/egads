@@ -1,0 +1,165 @@
+#ifndef EGADS_H
+#define EGADS_H
+
+/* Begin autoconf configured macros */
+#undef EGADSDATA
+#undef WORDS_BIGENDIAN
+#undef THREAD_USES_NEWPID
+#undef FBSD_THREADS
+/* End autoconf configured macros */
+
+#ifndef WIN32
+#include <sys/time.h>   /* for struct timeval */
+#include <limits.h>
+#else
+#include <sys/timeb.h>  /* for struct timeval */
+
+#include <limits.h>
+
+#define EGADS_MAILSLOT_NAME "securesw\\egads"
+
+typedef struct egads_request_t
+{
+  int cmd;
+  int howmuch;
+  DWORD dwProcessId;
+  HANDLE hWritePipe;
+} egads_request_t;
+
+/* Miscellaneous compatibility items */
+
+
+#define PATH_MAX 256
+typedef DWORD pid_t;
+#endif
+
+typedef unsigned char      UINT8;   /* 1 byte   */
+
+#define KEY_LEN 16
+
+#define AES_BLOCK_LEN 16
+#define UMAC_KEY_LEN 16
+#define ROUNDS          ((UMAC_KEY_LEN / 4) + 6)
+typedef UINT8          aes_int_key[ROUNDS+1][4][4];
+
+
+
+
+#define MAXBLOCKRESEED                  1048576 /* 2^20 */
+
+#define GATE_SIZE                       (1 << 24)
+
+#define RERR_OK             0
+#define RERR_NOHANDLE       1
+#define RERR_CONNFAILED     2
+#define RERR_NOSOCK         3
+#define RERR_WRITEFAIL      4
+#define RERR_SHORTREAD      5
+
+#define SOCK_FILE_NAME      "egads.socket"
+
+#define ECMD_REQ_ENTROPY    1
+#define EERR_OK             0
+#define EERR_UNKNOWN_CMD    1
+#define EERR_BAD_REQ        2
+
+#define EGD_REQ_ENTROPY_LEVEL 0
+#define EGD_REQ_ENTROPY_NB    1
+#define EGD_REQ_ENTROPY       2
+#define EGD_ADD_ENTROPY       3
+#define EGD_REQ_PID           4
+
+#ifndef WIN32
+typedef char      int8;
+typedef short     int16;
+typedef long      int32;
+typedef long long int64;
+
+typedef unsigned long long uint64, word64;
+typedef unsigned long      uint32, word32;
+typedef unsigned short     uint16, word16;
+typedef unsigned char      uint8,  word8;
+#else
+typedef __int8  int8;
+typedef __int16 int16;
+typedef __int32 int32;
+typedef __int64 int64;
+
+typedef unsigned __int64 uint64, word64;
+typedef unsigned __int32 uint32, word32;
+typedef unsigned __int16 uint16, word16;
+typedef unsigned __int8  uint8,  word8;
+#endif
+
+typedef struct eg_t {
+  char sockname[PATH_MAX];
+  char randfile[PATH_MAX];
+  char *(*eg)(int, struct eg_t *);
+  void (*egfree)(void *);
+  double gaussstate;
+} eg_t;
+
+typedef struct prngctx_t {
+#ifdef USE_OPENSSL
+  EVP_CIPHER_CTX cctx;
+#else
+  aes_int_key cctx;
+#endif
+  eg_t eg;
+  /*  uint64  octr;  Not implemented. */
+  uint64 *ectr;
+  uint64 step[2];
+  uint64 *rectr;
+  int keylen, blocklen;
+  long sec, usec;
+  struct timeval target;
+  char leftover[AES_BLOCK_LEN];
+  unsigned short num_left;
+  char *lptr; 
+  int outputblocks; /* How many blocks have we output so far? */
+  uint64 nonce;
+#ifdef THREAD_USES_NEWPID
+#ifndef NO_THREADS
+  struct timeval seedtime;
+#endif
+#else
+  pid_t mypid;
+#endif
+
+} prngctx_t;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern void PRNG_rekey(prngctx_t *c, char *seed);
+extern void PRNG_output(prngctx_t *c, char *buf, uint64 size);
+extern int  PRNG_init(prngctx_t *c, char *seed, long sec, long usec);
+extern void PRNG_destroy(prngctx_t *c);
+
+extern void egads_init(prngctx_t *ctx, char *sockname, char *rfile, int *err);
+extern void egads_destroy(prngctx_t *ctx);
+extern void egads_entropy(prngctx_t *c, char *buf, int size, int *error);
+extern void egads_randint(prngctx_t *ctx, unsigned int *out, int *error);
+extern void egads_randreal(prngctx_t *ctx, double *out, int *error);
+extern void egads_randrange(prngctx_t *ctx, int *out, int min, int max, int *error);
+extern void egads_randstring(prngctx_t *ctx, char *out, int len, int *error);
+extern void egads_randfname(prngctx_t *ctx, char *out, int len, int *error);
+extern void egads_randlong(prngctx_t *ctx, long *out, int *error);
+extern void egads_randuniform(prngctx_t *ctx, double *out, double min, double max, int *error);
+extern void egads_expovariate(prngctx_t *ctx, double *out, double lambda, int *error);
+extern void egads_betavariate(prngctx_t *ctx, double *out, double alpha, double beta, int *error);
+extern void egads_cunifvariate(prngctx_t *ctx, double *out, double mean, double arc, int *error);
+extern void egads_lognormalvariate(prngctx_t *ctx, double *out, double mu, double sigma, int *error);
+extern void egads_normalvariate(prngctx_t *ctx, double *out, double mu, double sigma, int *error);
+extern void egads_paretovariate(prngctx_t *ctx, double *out, double alpha, int *error);
+extern void egads_weibullvariate(prngctx_t *ctx, double *out, double alpha, double beta, int *error);
+extern void egads_gauss(prngctx_t *ctx, double *out, double mu, double sigma, int *error);
+
+#define egads_randbuf(c,b,s) PRNG_output(c,b,s)
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif 

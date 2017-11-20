@@ -1,0 +1,244 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_EULA DIALOG DISCARDABLE  0, 0, 340, 300
+STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "License Agreement"
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDC_TEXT,5,5,330,270,ES_MULTILINE | ES_AUTOVSCROLL | 
+                    ES_AUTOHSCROLL | ES_READONLY | ES_WANTRETURN | 
+                    WS_VSCROLL
+    DEFPUSHBUTTON   "YES, I Agree",IDOK,182,281,64,14
+    PUSHBUTTON      "NO, I Disagree",IDCANCEL,251,281,64,14
+END
+
+IDD_INSTALL DIALOG DISCARDABLE  0, 0, 186, 106
+STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "EGADS Installation"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "Install needs to know where you want to install EGADS to.  Please choose a location and then click the Install button to continue.",
+                    IDC_STATIC,7,7,172,38
+    LTEXT           "Installation &directory:",IDC_STATIC,7,55,65,8
+    EDITTEXT        IDC_INSTALL_PATH,7,65,130,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "&Browse",IDC_BROWSE,140,65,38,14
+    DEFPUSHBUTTON   "&Install",IDOK,70,85,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,130,85,50,14
+END
+
+IDD_CHOOSE_PATH DIALOG DISCARDABLE  36, 24, 167, 135
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | DS_3DLOOK | WS_POPUP | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "Open"
+FONT 8, "Helv"
+BEGIN
+    LTEXT           "File &name:",1090,6,6,76,9,NOT WS_VISIBLE
+    EDITTEXT        1152,6,16,94,12,ES_AUTOHSCROLL | ES_OEMCONVERT
+    LISTBOX         1120,75,65,89,68,LBS_SORT | LBS_OWNERDRAWFIXED | 
+                    LBS_HASSTRINGS | LBS_DISABLENOSCROLL | NOT WS_VISIBLE | 
+                    WS_VSCROLL | WS_TABSTOP
+    LTEXT           "&Folders:",-1,5,5,96,9
+    LTEXT           "",1088,5,20,96,9,SS_NOPREFIX | NOT WS_VISIBLE
+    LISTBOX         1121,5,30,95,75,LBS_SORT | LBS_OWNERDRAWFIXED | 
+                    LBS_HASSTRINGS | LBS_DISABLENOSCROLL | WS_VSCROLL | 
+                    WS_TABSTOP
+    LTEXT           "List files of &type:",1089,6,104,90,9,NOT WS_VISIBLE
+    COMBOBOX        1136,6,114,90,36,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | 
+                    NOT WS_VISIBLE | WS_BORDER | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Dri&ves:",1091,5,105,92,9
+    COMBOBOX        1137,5,115,92,68,CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | 
+                    CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_BORDER | 
+                    WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,110,5,50,14,WS_GROUP
+    PUSHBUTTON      "Cancel",IDCANCEL,110,25,50,14,WS_GROUP
+    PUSHBUTTON      "&Help",1038,110,45,50,14,NOT WS_VISIBLE | WS_GROUP
+    CHECKBOX        "&Read only",1040,110,70,50,12,NOT WS_VISIBLE | WS_GROUP
+    PUSHBUTTON      "Net&work...",1037,110,115,50,14,WS_GROUP
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_EULA, DIALOG
+    BEGIN
+        LEFTMARGIN, 5
+        RIGHTMARGIN, 475
+        TOPMARGIN, 5
+        BOTTOMMARGIN, 295
+    END
+
+    IDD_INSTALL, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 99
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "\0"
+            VALUE "CompanyName", "Secure Software, Inc.\0"
+            VALUE "FileDescription", "EGADS Installation Tool\0"
+            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "InternalName", "setup\0"
+            VALUE "LegalCopyright", "Copyright © 2001-2002\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "setup.exe\0"
+            VALUE "PrivateBuild", "\0"
+            VALUE "ProductName", "Setup\0"
+            VALUE "ProductVersion", "1, 0, 0, 2\0"
+            VALUE "SpecialBuild", "\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_INSTALL             "Install"
+    IDS_DOESNOTEXIST_CREATE "`%s' does not exist.  Do you want to create it?"
+    IDS_INSTALL_ERROR       "Install Error"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_CREATE_FAILED       "Could not create the directory `%s'"
+    IDS_NOT_DIRECTORY       "`%s' exists but is not a directory!"
+    IDS_INSTALLATION_PATH   "Installation Path"
+    IDS_ERROR               "Error"
+    IDS_COPY_FAILED         "Copy operation failed!"
+    IDS_FATAL_ERROR         "Fatal Error"
+    IDS_EULA_MISSING        "The end user license agreement could not be found.  Setup will not continue."
+    IDS_SUCCESS             "Success"
+    IDS_INSTALLATION_COMPLETE "Installation completed successfully!"
+    IDS_SERVICE_FAILED      "Service registration failed.  EGADS is not properly installed."
+    IDS_SERVICE_DESCRIPTION "Entropy Gathering And Distribution System"
+    IDS_UNINSTALL           "Uninstall"
+    IDS_UNINSTALL_CONFIRM   "Are you sure that you want to uninstall EGADS?"
+    IDS_UNINSTALL_PARTIAL   "EGADS has been partially uninstalled from your computer.  Some files remain that you may delete manually."
+    IDS_UNINSTALL_SUCCESS   "EGADS has been successfully uninstalled from your computer."
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_UNINSTALL_FAILED    "An error occurred uninstalling EGADS."
+    IDS_UNINSTALL_SERVICE_MANAGER 
+                            "An error occurred uninstalling EGADS.  The service manager could not be opened."
+    IDS_UNINSTALL_SERVICE_OPEN 
+                            "An error occurred uninstalling EGADS.  The service could not be opened."
+    IDS_UNINSTALL_SERVICE_STOP 
+                            "An error occurred uninstalling EGADS.  The service could not be stopped."
+    IDS_UNINSTALL_SERVICE_DELETE 
+                            "An error occurred uninstalling EAGDS.  The service could not be deleted."
+    IDS_UNSUPPORTED_VERSION "You are running an unsupported version of Windows.  EGADS requires Windows NT 4.0 or higher."
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

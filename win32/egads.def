@@ -1,0 +1,26 @@
+LIBRARY EGADS.DLL
+DESCRIPTION "Entropy Gathering And Distribution System"
+EXPORTS
+    PRNG_rekey
+    PRNG_output
+    PRNG_init
+    PRNG_destroy
+
+    egads_init
+    egads_destroy
+    egads_randint
+    egads_randreal
+    egads_randrange
+    egads_randstring
+    egads_randfname
+    egads_randlong
+    egads_randuniform
+    egads_expovariate
+    egads_betavariate
+    egads_cunifvariate
+    egads_lognormalvariate
+    egads_normalvariate
+    egads_paretovariate
+    egads_weibullvariate
+    egads_gauss
+    
